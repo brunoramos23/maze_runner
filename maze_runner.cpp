@@ -89,15 +89,14 @@ void print_maze() {
 }
 
 
-// Função responsável pela navegação.
 // Recebe como entrada a posição initial e retorna um booleando indicando se a saída foi encontrada
 bool walk(pos_t pos) {
     // Verifica se a posição atual é a saída
     if (maze[pos.i][pos.j] == 's') {
-        // Limpe a tela (depende do sistema operacional)
+        // Limpa a tela
         system("clear");
 
-        // Imprima o labirinto
+        // Imprime o labirinto
         print_maze();
         
        std::this_thread::sleep_for(std::chrono::milliseconds(25));
@@ -108,7 +107,7 @@ bool walk(pos_t pos) {
     // Marca a posição atual como explorada
     maze[pos.i][pos.j] = '.';
 
-    // Limpa a tela (depende do sistema operacional)
+    // Limpa a tela
     system("clear");
     // Imprime o labirinto
     print_maze();
@@ -127,7 +126,7 @@ bool walk(pos_t pos) {
         if (next_pos.i >= 0 && next_pos.i < num_rows &&
             next_pos.j >= 0 && next_pos.j < num_cols &&
             (maze[next_pos.i][next_pos.j] == 'x' || maze[next_pos.i][next_pos.j] == 's')) {
-            // Adicione a próxima posição à pilha de posições válidas
+            // Adiciona a próxima posição à pilha de posições válidas
             valid_positions.push(next_pos);
         }
     }
@@ -137,14 +136,12 @@ bool walk(pos_t pos) {
         pos_t next_position = valid_positions.top();
         valid_positions.pop();
         
-        // Chame recursivamente a função walk com a próxima posição
+        // Chama recursivamente a função walk com a próxima posição
         if (walk(next_position)) {
             return true; // Saída encontrada
         }
     }
 
-    // Se chegamos aqui, não há mais posições a serem exploradas a partir desta posição
-    // Marque a posição como morta ('o') e retorne false
     maze[pos.i][pos.j] = 'o';
 
     return false; // Não há saída a partir desta posição
@@ -158,20 +155,20 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Carregar o labirinto com o nome do arquivo recebido como argumento
+    // Carrega o labirinto com o nome do arquivo recebido como argumento
     pos_t initial_pos = load_maze(argv[1]);
 
-    // Chamar a função de navegação
+    // Chama a função de navegação
     bool exit_found = walk(initial_pos);
 
-    // Tratar o retorno (imprimir mensagem)
+    // Trata o retorno imprimindo a mensagem
     if (exit_found) {
         printf("Saída encontrada!\n");
     } else {
         printf("Nenhuma saída encontrada.\n");
     }
 
-    // Liberar a memória alocada para o labirinto
+    // Libera a memória alocada para o labirinto
     for (int i = 0; i < num_rows; ++i) {
         delete[] maze[i];
     }
