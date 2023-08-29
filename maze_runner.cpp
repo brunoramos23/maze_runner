@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stack>
 #include <cstdlib>
+#include <thread>
+#include <unistd.h>
 
 using namespace std;
 
@@ -90,21 +92,29 @@ void print_maze() {
 // Função responsável pela navegação.
 // Recebe como entrada a posição initial e retorna um booleando indicando se a saída foi encontrada
 bool walk(pos_t pos) {
-    // Verifique se a posição atual é a saída
+    // Verifica se a posição atual é a saída
     if (maze[pos.i][pos.j] == 's') {
+        // Limpe a tela (depende do sistema operacional)
+        system("clear");
+
+        // Imprima o labirinto
+        print_maze();
+        
+       std::this_thread::sleep_for(std::chrono::milliseconds(25));
+        
         return true; // Saída encontrada
     }
 
-    // Marcar a posição atual como explorada
+    // Marca a posição atual como explorada
     maze[pos.i][pos.j] = '.';
 
-    // Limpar a tela (opcional)
+    // Limpa a tela (depende do sistema operacional)
     system("clear");
-
-    // Imprimir o labirinto atualizado
+    // Imprime o labirinto
     print_maze();
+    std::this_thread::sleep_for(std::chrono::milliseconds(25));
 
-    // Verifique as próximas posições possíveis
+    // Verifica as próximas posições possíveis
     pos_t next_positions[] = {
         {pos.i - 1, pos.j}, // Up
         {pos.i + 1, pos.j}, // Down
@@ -113,7 +123,7 @@ bool walk(pos_t pos) {
     };
 
     for (pos_t next_pos : next_positions) {
-        // Verifique se a próxima posição é válida
+        // Verifica se a próxima posição é válida
         if (next_pos.i >= 0 && next_pos.i < num_rows &&
             next_pos.j >= 0 && next_pos.j < num_cols &&
             (maze[next_pos.i][next_pos.j] == 'x' || maze[next_pos.i][next_pos.j] == 's')) {
@@ -144,7 +154,7 @@ bool walk(pos_t pos) {
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
-        printf("Uso: %s <arquivo_do_labirinto>\n", argv[0]);
+        printf("Uso: %s <maze.txt>\n", argv[0]);
         return 1;
     }
 
