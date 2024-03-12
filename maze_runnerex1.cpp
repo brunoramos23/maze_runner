@@ -1,3 +1,6 @@
+//abrir o arquivo, ler a matriz, procurar o e, procurar em volta o x
+
+
 #include <stdio.h>
 #include <stack>
 #include <cstdlib>
@@ -43,43 +46,46 @@ std::stack<pos_t> valid_positions;
 // memória e retorna a posição inicial
 pos_t load_maze(const char* file_name) {
     pos_t initial_pos;
-    FILE* file = fopen(file_name, "r");
+    // Abre o arquivo para leitura (fopen)
+	FILE* file = fopen(file_name, "r");
+
+	// Verifica se o arquivo foi aberto com sucesso
+	if (file == NULL) {
+		printf("Erro ao abrir o arquivo '%s'\n", file_name);
+		return initial_pos;
+	}
+
+	// Lê o número de linhas e colunas (fscanf) e salva em num_rows e num_cols
+	fscanf(file, "%d %d", &num_rows, &num_cols);
     
-    if (file == nullptr) {
-        // Trate o erro ao abrir o arquivo
-        exit(1);
-    }
-    
-    // Le o numero de linhas e colunas
-    fscanf(file, "%d %d\n", &num_rows, &num_cols);
-    
-    // Aloca a matriz maze
-    maze = new char*[num_rows];
-    for (int i = 0; i < num_rows; ++i) {
-        maze[i] = new char[num_cols];
-    }
-    
-    for (int i = 0; i < num_rows; ++i) {
-        for (int j = 0; j < num_cols; ++j) {
-            // Le o valor da linha i, j do arquivo
-            fscanf(file, " %c", &maze[i][j]);
-            
-            // Se o valor for 'e', salvar a posição inicial
-            if (maze[i][j] == 'e') {
-                initial_pos.i = i;
-                initial_pos.j = j;
-            }
-        }
-        fscanf(file, "\n");
-    }
-    
-    fclose(file);
-    
-    return initial_pos;
+    // Aloca a matriz maze (malloc)
+	maze = (char**)malloc(sizeof(char*) * num_rows);
+	for (int i = 0; i < num_rows; ++i) {
+		maze[i] = (char*)malloc(sizeof(char) * num_cols);
+	}
+
+	// Lê o labirinto caractere a caractere (fgetc)
+	for (int i = 0; i < num_rows; ++i) {
+		for (int j = 0; j < num_cols; ++j) {
+			maze[i][j] = (char)fgetc(file);
+            //fgetc lê o arquivo caractere a caractere
+			// Se o caractere for 'e', salva a posição inicial
+			if (maze[i][j] == 'e') {
+				initial_pos.i = i;
+				initial_pos.j = j;
+			}
+		}
+	}
+
+	// Fecha o arquivo (fclose)
+	fclose(file);
+
+	return initial_pos;
 }
 
 // Função que imprime o labirinto
 void print_maze() {
+    system("clear");
 	for (int i = 0; i < num_rows; ++i) {
 		for (int j = 0; j < num_cols; ++j) {
 			printf("%c", maze[i][j]);
@@ -91,60 +97,47 @@ void print_maze() {
 
 // Recebe como entrada a posição initial e retorna um booleando indicando se a saída foi encontrada
 bool walk(pos_t pos) {
-    // Verifica se a posição atual é a saída
-    if (maze[pos.i][pos.j] == 's') {
-        // Limpa a tela
-        system("clear");
+   // Marcar a posição atual com o símbolo '.'
+	maze[pos.i][pos.j] = '.';
 
-        // Imprime o labirinto
-        print_maze();
-        
-       std::this_thread::sleep_for(std::chrono::milliseconds(25));
-        
-        return true; // Saída encontrada
-    }
+	// Imprimir o labirinto
+	print_maze();
 
-    // Marca a posição atual como explorada
-    maze[pos.i][pos.j] = '.';
+	// Verificar se a posição atual é a saída
+	if (maze[pos.i][pos.j] == 's') {
+		return true;
+	}
 
-    // Limpa a tela
-    system("clear");
-    // Imprime o labirinto
-    print_maze();
-    std::this_thread::sleep_for(std::chrono::milliseconds(25));
+	// Verificar as posições adjacentes (cima, baixo, esquerda, direita)
+	for (int i = -1; i <= 1; ++i) {
+		for (int j = -1; j <= 1; ++j) {
+			// Ignorar a posição atual
+			if (i == 0 && j == 0) {
+				continue;
+			}
 
-    // Verifica as próximas posições possíveis
-    pos_t next_positions[] = {
-        {pos.i - 1, pos.j}, // Up
-        {pos.i + 1, pos.j}, // Down
-        {pos.i, pos.j - 1}, // Left
-        {pos.i, pos.j + 1}  // Right
-    };
+			// Calcular a posição adjacente
+			pos_t next_pos;
+			next_pos.i = pos.i + i;
+			next_pos.j = pos.j + j;
 
-    for (pos_t next_pos : next_positions) {
-        // Verifica se a próxima posição é válida
-        if (next_pos.i >= 0 && next_pos.i < num_rows &&
-            next_pos.j >= 0 && next_pos.j < num_cols &&
-            (maze[next_pos.i][next_pos.j] == 'x' || maze[next_pos.i][next_pos.j] == 's')) {
-            // Adiciona a próxima posição à pilha de posições válidas
-            valid_positions.push(next_pos);
-        }
-    }
+			// Verificar se a posição adjacente é válida
+			if (next_pos.i >= 0 && next_pos.i < num_rows &&
+				next_pos.j >= 0 && next_pos.j < num_cols) {
 
-    // Verifica se a pilha de posições não está vazia
-    if (!valid_positions.empty()) {
-        pos_t next_position = valid_positions.top();
-        valid_positions.pop();
-        
-        // Chama recursivamente a função walk com a próxima posição
-        if (walk(next_position)) {
-            return true; // Saída encontrada
-        }
-    }
+				// Verificar se a posição adjacente é um caminho válido ('x')
+				if (maze[next_pos.i][next_pos.j] == 'x') {
+					// Chamar a função `walk` recursivamente para a posição adjacente
+					if (walk(next_pos)) {
+						return true;
+					}
+				}
+			}
+		}
+	}
 
-    maze[pos.i][pos.j] = 'o';
-
-    return false; // Não há saída a partir desta posição
+	// Se nenhuma saída foi encontrada, retornar falso
+	return false;
 }
 
 
