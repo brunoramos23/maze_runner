@@ -1,11 +1,12 @@
 //abrir o arquivo, ler a matriz, procurar o e, procurar em volta o x
 
-
 #include <stdio.h>
 #include <stack>
+#include <queue>
 #include <cstdlib>
 #include <thread>
 #include <unistd.h>
+
 
 using namespace std;
 
@@ -24,7 +25,7 @@ struct pos_t {
 
 // Estrutura de dados contendo as próximas
 // posicões a serem exploradas no labirinto
-std::stack<pos_t> valid_positions;
+std::stack <pos_t> valid_positions;
 /* Inserir elemento: 
 
 	 pos_t pos;
@@ -49,19 +50,18 @@ pos_t load_maze(const char* file_name) {
     // Abre o arquivo para leitura (fopen)
 	FILE* file = fopen(file_name, "r");
 
-	// Verifica se o arquivo foi aberto com sucesso
-	if (file == NULL) {
-		printf("Erro ao abrir o arquivo '%s'\n", file_name);
-		return initial_pos;
-	}
-
 	// Lê o número de linhas e colunas (fscanf) e salva em num_rows e num_cols
 	fscanf(file, "%d %d", &num_rows, &num_cols);
     
     // Aloca a matriz maze (malloc)
-	maze = (char**)malloc(sizeof(char*) * num_rows);
+	maze = (char**)malloc(num_rows * sizeof(char*));
 	for (int i = 0; i < num_rows; ++i) {
-		maze[i] = (char*)malloc(sizeof(char) * num_cols);
+		maze[i] = (char*)malloc(num_cols * sizeof(char));
+		for (int j = 0; j < num_cols; ++j) {
+   			 maze[i][j] = '\0'; // Inicializa cada posição com '\0'
+  }
+}
+//parei aquiAAAAAAAAAAAA
 	}
 
 	// Lê o labirinto caractere a caractere (fgetc)
@@ -70,6 +70,8 @@ pos_t load_maze(const char* file_name) {
 			maze[i][j] = (char)fgetc(file);
             //fgetc lê o arquivo caractere a caractere
 			// Se o caractere for 'e', salva a posição inicial
+			if (maze[i][j] == '\n') {
+     			break; // Ignora caracteres de nova linha
 			if (maze[i][j] == 'e') {
 				initial_pos.i = i;
 				initial_pos.j = j;
@@ -92,6 +94,8 @@ void print_maze() {
 		}
 		printf("\n");
 	}
+
+	sleep(1);
 }
 
 
@@ -122,9 +126,7 @@ bool walk(pos_t pos) {
 			next_pos.j = pos.j + j;
 
 			// Verificar se a posição adjacente é válida
-			if (next_pos.i >= 0 && next_pos.i < num_rows &&
-				next_pos.j >= 0 && next_pos.j < num_cols) {
-
+			if (next_pos.i >= 0 && next_pos.i < num_rows && next_pos.j >= 0 && next_pos.j < num_cols && maze[next_pos.i][next_pos.j] == 'x') {
 				// Verificar se a posição adjacente é um caminho válido ('x')
 				if (maze[next_pos.i][next_pos.j] == 'x') {
 					// Chamar a função `walk` recursivamente para a posição adjacente
@@ -135,7 +137,10 @@ bool walk(pos_t pos) {
 			}
 		}
 	}
-
+if (!valid_positions.empty()) {
+			pos_t next_position = valid_positions.top();
+			valid_positions.pop();
+		}
 	// Se nenhuma saída foi encontrada, retornar falso
 	return false;
 }
@@ -149,7 +154,7 @@ int main() {
     }*/
 
     // Carrega o labirinto com o nome do arquivo recebido como argumento
-    pos_t initial_pos = load_maze("../data/maze4.txt");
+    pos_t initial_pos = load_maze("../data/maze.txt");
 
     // Chama a função de navegação
     bool exit_found = walk(initial_pos);
