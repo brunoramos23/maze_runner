@@ -2,6 +2,8 @@
 
 ### Exercício Computacional 1
 
+Dupla: Bruno Ramos Menezes e Juan Lobo Pereira
+
 Neste exercício você deve desenvolver um programa para encontrar a saída de um labirinto.
 
 ### Especificações
