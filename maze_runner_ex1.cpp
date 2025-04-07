@@ -11,7 +11,6 @@ char **maze; // Voce também pode representar o labirinto como um vetor de vetor
 // Numero de linhas e colunas do labirinto
 int num_rows;
 int num_cols;
-bool exit_found = false;
 
 // Representação de uma posição
 struct pos_t
@@ -20,7 +19,27 @@ struct pos_t
 	int j;
 };
 
-// Função que le o labirinto de um arquivo texto, carrega em memória e retorna a posição inicial
+// Estrutura de dados contendo as próximas
+// posicões a serem exploradas no labirinto
+std::stack<pos_t> valid_positions;
+/* Inserir elemento:
+
+	 pos_t pos;
+	 pos.i = 1;
+	 pos.j = 3;
+	 valid_positions.push(pos)
+ */
+// Retornar o numero de elementos:
+//    valid_positions.size();
+//
+// Retornar o elemento no topo:
+//  valid_positions.top();
+//
+// Remover o primeiro elemento do vetor:
+//    valid_positions.pop();
+
+// Função que le o labirinto de um arquivo texto, carrega em
+// memória e retorna a posição inicial
 pos_t load_maze(const char *file_name)
 {
 	pos_t initial_pos;
@@ -71,14 +90,19 @@ void print_maze()
 
 // Função responsável pela navegação.
 // Recebe como entrada a posição inicial e retorna um booleano indicando se a saída foi encontrada
-void walk(pos_t pos)
+bool walk(pos_t pos)
 {
 	if (maze[pos.i][pos.j] != '.')
 	{
 		// Repita até que a saída seja encontrada ou não existam mais posições não exploradas
 		// Marcar a posição atual com o símbolo 'o'
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		maze[pos.i][pos.j] = 'o';
+		// Limpa a tela
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		system("clear");
+		// Imprime o labirinto
+		print_maze();
+
 		/* Dado a posição atual, verifica quais sao as próximas posições válidas
 			Checar se as posições abaixo são validas (i>0, i<num_rows, j>0, j <num_cols)
 			e se são posições ainda não visitadas (ou seja, caracter 'x') e inserir
@@ -93,70 +117,81 @@ void walk(pos_t pos)
 		{
 			if (maze[pos.i][pos.j + 1] == 'x')
 			{
-				std::thread t(walk, pos_t{pos.i, pos.j + 1});
-				t.detach();
+				valid_positions.push({pos.i, pos.j + 1});
 			}
 			else if (maze[pos.i][pos.j + 1] == 's')
 			{
-				exit_found = true;
+				return true;
 			}
 		}
 		if (pos.j - 1 >= 0)
 		{
 			if (maze[pos.i][pos.j - 1] == 'x')
 			{
-				std::thread t(walk, pos_t{pos.i, pos.j - 1});
-				t.detach();
+				valid_positions.push({pos.i, pos.j - 1});
 			}
 			else if (maze[pos.i][pos.j - 1] == 's')
 			{
-				exit_found = true;
+				return true;
 			}
 		}
 		if (pos.i + 1 < num_rows)
 		{
 			if (maze[pos.i + 1][pos.j] == 'x')
 			{
-				std::thread t(walk, pos_t{pos.i + 1, pos.j});
-				t.detach();
+				valid_positions.push({pos.i + 1, pos.j});
 			}
 			else if (maze[pos.i + 1][pos.j] == 's')
 			{
-				exit_found = true;
+				return true;
 			}
 		}
 		if (pos.i - 1 >= 0)
 		{
 			if (maze[pos.i - 1][pos.j] == 'x')
 			{
-				std::thread t(walk, pos_t{pos.i - 1, pos.j});
-				t.detach();
+				valid_positions.push({pos.i - 1, pos.j});
 			}
 			else if (maze[pos.i - 1][pos.j] == 's')
 			{
-				exit_found = true;
+				return true;
 			}
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
 		maze[pos.i][pos.j] = '.';
+	}
+
+	// Verifica se a pilha de posições nao esta vazia
+	if (!valid_positions.empty())
+	{
+		// Caso não esteja, pegar o primeiro valor de  valid_positions, remove-lo e chamar a funçao walk com esse valor
+		pos_t next_position = valid_positions.top();
+		valid_positions.pop();
+		walk(next_position);
+	}
+	else
+	{
+		// Caso contrario, retornar falso
+		return false;
 	}
 }
 
 int main(int argc, char *argv[])
 {
 	system("clear");
-	pos_t initial_pos = load_maze("../data/maze6.txt");
-	std::thread t(walk,initial_pos);
-	while (!exit_found)
-	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		system("clear");
-		print_maze();
-	}
-	t.join();
+	// carregar o labirinto com o nome do arquivo recebido como argumento
+	pos_t initial_pos = load_maze("../data/maze2.txt");
+	// chamar a função de navegação
+	bool exit_found = walk(initial_pos);
+	// Tratar o retorno (imprimir mensagem)
 	if (exit_found)
 	{
 		std::cout << "Saída encontrada" << std::endl;
 	}
+	else
+	{
+		std::cout << "Não existem mais caminhos disponíveis" << std::endl;
+	}
+
 	return 0;
 }
